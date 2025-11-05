@@ -86,10 +86,10 @@ const AdminDashboard = () => {
                 </span>
               </td>
               <td className="py-3 px-4 text-center">
-                <button className="bg-green-600 text-white px-3 py-1 rounded mr-2 hover:bg-green-700 text-sm">
+                <button className="cursor-pointer bg-green-600 text-white px-3 py-1 rounded mr-2 hover:bg-green-700 text-sm">
                   Mark Resolved
                 </button>
-                <button className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm">
+                <button className="cursor-pointer bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm">
                   <Trash2 size={14} />
                 </button>
               </td>
