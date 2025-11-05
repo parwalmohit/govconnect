@@ -1,21 +1,58 @@
-import React, { useState } from 'react';
-import { LogIn, Eye, EyeOff, Lock, Mail, User, Shield } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { LogIn, Eye, EyeOff, Lock, Mail, User, Shield } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import axios from "axios";
 
-const Login = () => {
-  const [view, setView] = useState('user'); // toggle between user/admin
-  const [formData, setFormData] = useState({ email: '', password: '' });
+const Login = ({ isAdminLogin = false }) => {
+  const [view, setView] = useState(isAdminLogin ? "admin" : "user");
+  const [formData, setFormData] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = () => {
-    setError('');
+  const navigate = useNavigate();
+
+  const baseURL = import.meta.env.VITE_API_URL;
+
+  // Auto-redirect if already logged in
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+    if (token) {
+      if (role === "admin") navigate("/admin-dashboard");
+      else navigate("/user-dashboard");
+    }
+  }, [navigate]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.email || !formData.password) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+
     setLoading(true);
-    setTimeout(() => {
-      alert(`${view === 'user' ? 'User' : 'Admin'} Login Successful!`);
+    try {
+      const url =
+        view === "user"
+          ? `${baseURL}/auth/login`
+          : `${baseURL}/auth/admin/login`;
+
+      const { data } = await axios.post(url, formData);
+
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("role", data.role);
+
+      toast.success(
+        `${data.role === "user" ? "User" : "Admin"} login successful`
+      );
+      if (data.role === "admin") navigate("/admin-dashboard");
+      else navigate("/user-dashboard");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Login failed");
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   const handleChange = (e) =>
@@ -24,9 +61,9 @@ const Login = () => {
   return (
     <div
       className={`min-h-screen flex items-center justify-center p-8 ${
-        view === 'user'
-          ? 'bg-linear-to-br from-blue-50 to-blue-100'
-          : 'bg-linear-to-br from-red-50 to-red-100'
+        view === "user"
+          ? "bg-linear-to-br from-blue-50 to-blue-100"
+          : "bg-linear-to-br from-red-50 to-red-100"
       }`}
     >
       <div className="w-full max-w-md">
@@ -35,38 +72,31 @@ const Login = () => {
           <div className="text-center mb-8">
             <div
               className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 ${
-                view === 'user' ? 'bg-blue-600' : 'bg-red-600'
+                view === "user" ? "bg-blue-600" : "bg-red-600"
               }`}
             >
-              {view === 'user' ? (
+              {view === "user" ? (
                 <User className="text-white" size={32} />
               ) : (
                 <Shield className="text-white" size={32} />
               )}
             </div>
             <h2 className="text-3xl font-bold text-gray-800 mb-2">
-              {view === 'user' ? 'Welcome Back' : 'Admin Portal'}
+              {view === "user" ? "Welcome Back" : "Admin Portal"}
             </h2>
             <p className="text-gray-600">
-              {view === 'user'
-                ? 'Sign in to track your reports'
-                : 'Authorized access only'}
+              {view === "user"
+                ? "Sign in to track your reports"
+                : "Authorized access only"}
             </p>
           </div>
 
-          {/* Error */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
-              {error}
-            </div>
-          )}
-
           {/* Form */}
-          <div className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
             {/* Email Field */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                {view === 'user' ? 'Email Address' : 'Admin Email'}
+                {view === "user" ? "Email Address" : "Admin Email"}
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -78,7 +108,7 @@ const Login = () => {
                   value={formData.email}
                   onChange={handleChange}
                   placeholder={
-                    view === 'user' ? 'your@email.com' : 'admin@gov.in'
+                    view === "user" ? "your@email.com" : "admin@gov.in"
                   }
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
                 />
@@ -95,7 +125,7 @@ const Login = () => {
                   <Lock className="text-gray-400" size={20} />
                 </div>
                 <input
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
@@ -108,25 +138,36 @@ const Login = () => {
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
                 >
                   {showPassword ? (
-                  <Eye className="text-gray-400 hover:text-gray-600" size={20} />
+                    <Eye
+                      className="cursor-pointer text-gray-400 hover:text-gray-600"
+                      size={20}
+                    />
                   ) : (
-                    <EyeOff className="text-gray-400 hover:text-gray-600" size={20} />
+                    <EyeOff
+                      className="cursor-pointer text-gray-400 hover:text-gray-600"
+                      size={20}
+                    />
                   )}
                 </button>
               </div>
             </div>
 
             {/* Extra Options */}
-            {view === 'user' ? (
+            {view === "user" ? (
               <div className="flex items-center justify-between">
                 <label className="flex items-center cursor-pointer">
                   <input
                     type="checkbox"
                     className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                   />
-                  <span className="ml-2 text-sm text-gray-700">Remember me</span>
+                  <span className="ml-2 text-sm text-gray-700">
+                    Remember me
+                  </span>
                 </label>
-                <Link to="/forgot" className="text-sm text-blue-600 hover:text-blue-700">
+                <Link
+                  to="/forgot"
+                  className="text-sm text-blue-600 hover:text-blue-700"
+                >
                   Forgot password?
                 </Link>
               </div>
@@ -135,57 +176,59 @@ const Login = () => {
                 <label className="flex items-center cursor-pointer">
                   <input
                     type="checkbox"
-                    className="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
+                    className="w-4 h-4 cursor-pointer text-red-600 border-gray-300 rounded focus:ring-red-500"
                   />
-                  <span className="ml-2 text-sm text-gray-700">Keep me signed in</span>
+                  <span className="ml-2 text-sm text-gray-700">
+                    Keep me signed in
+                  </span>
                 </label>
               </div>
             )}
 
             {/* Submit Button */}
             <button
-              onClick={handleSubmit}
+              type="submit"
               disabled={loading}
               className={`w-full ${
-                view === 'user'
-                  ? 'bg-blue-600 hover:bg-blue-700'
-                  : 'bg-red-600 hover:bg-red-700'
-              } text-white py-3 rounded-lg transition font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed`}
+                view === "user"
+                  ? "bg-blue-600 hover:bg-blue-700"
+                  : "bg-red-600 hover:bg-red-700"
+              } text-white cursor-pointer py-3 rounded-lg transition font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed`}
             >
               {loading ? (
                 <>
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  {view === 'user' ? 'Signing in...' : 'Authenticating...'}
+                  {view === "user" ? "Signing in..." : "Authenticating..."}
                 </>
               ) : (
                 <>
-                  {view === 'user' ? <LogIn size={20} /> : <Shield size={20} />}
-                  {view === 'user' ? 'Sign In' : 'Admin Sign In'}
+                  {view === "user" ? <LogIn size={20} /> : <Shield size={20} />}
+                  {view === "user" ? "Sign In" : "Admin Sign In"}
                 </>
               )}
             </button>
-          </div>
+          </form>
 
-          {/* Footer */}
-          {view === 'user' ? (
+          {/* Footer for users only */}
+          {view === "user" && (
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-600">
-                Don't have an account?{' '}
-                <Link to="/signup" className="text-blue-600 hover:text-blue-700 font-medium">
+                Don't have an account?{" "}
+                <Link
+                  to="/signup"
+                  className="text-blue-600 hover:text-blue-700 font-medium"
+                >
                   Sign up
                 </Link>
               </p>
               <div className="mt-4 text-center">
-                <Link to="/home" className="text-sm text-gray-600 hover:text-blue-600">
+                <Link
+                  to="/"
+                  className="text-sm text-gray-600 hover:text-blue-600"
+                >
                   ← Back to Home
                 </Link>
               </div>
-            </div>
-          ) : (
-            <div className="mt-6 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-              <p className="text-xs text-amber-800 text-center">
-                ⚠️ Unauthorized access is strictly prohibited and will be logged
-              </p>
             </div>
           )}
         </div>
@@ -193,21 +236,21 @@ const Login = () => {
         {/* Demo Switcher */}
         <div className="mt-6 flex justify-center gap-3">
           <button
-            onClick={() => setView('user')}
-            className={`px-4 py-2 rounded ${
-              view === 'user'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-200 text-gray-700'
+            onClick={() => setView("user")}
+            className={`px-4 cursor-pointer py-2 rounded ${
+              view === "user"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-200 text-gray-700"
             }`}
           >
             User Login
           </button>
           <button
-            onClick={() => setView('admin')}
-            className={`px-4 py-2 rounded ${
-              view === 'admin'
-                ? 'bg-red-600 text-white'
-                : 'bg-gray-200 text-gray-700'
+            onClick={() => setView("admin")}
+            className={`cursor-pointer px-4 py-2 rounded ${
+              view === "admin"
+                ? "bg-red-600 text-white"
+                : "bg-gray-200 text-gray-700"
             }`}
           >
             Admin Login
