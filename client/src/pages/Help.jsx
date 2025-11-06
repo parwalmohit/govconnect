@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Upload, MapPin, Phone, Mail, Trash } from "lucide-react";
 import axios from "axios";
+import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 const Help = () => {
   const [formData, setFormData] = useState({
@@ -9,7 +11,11 @@ const Help = () => {
     location: "",
     category: "roads",
     state: "",
+    image: null
   });
+
+  const navigate = useNavigate();
+  const baseURL = import.meta.env.VITE_API_URL;
 
   const handleChange = (e) => {
     setFormData({
@@ -18,8 +24,8 @@ const Help = () => {
     });
   };
 
-  const handleSubmit = async () => {
-    e.preventDefault(); 
+  const handleSubmit = async (e) => {  // ← ADD e parameter
+    e.preventDefault();
 
     // Validation
     if (
@@ -30,13 +36,13 @@ const Help = () => {
       !formData.location.trim() ||
       !formData.image
     ) {
-      alert("Please fill out all required fields and upload a photo.");
+      toast.error("Please fill out all required fields and upload a photo.");
       return;
     }
 
-    const token = localStorage.getItem("token"); // token from login
+    const token = localStorage.getItem("token");
     if (!token) {
-      alert("Please log in first to report an issue.");
+      toast.error("Please log in first to report an issue.");
       return;
     }
 
@@ -49,7 +55,7 @@ const Help = () => {
       data.append("location", formData.location);
       data.append("image", formData.image);
 
-      const res = await axios.post("http://localhost:3000/api/issues", data, {
+      const res = await axios.post(`${baseURL}/issues`, data, {
         headers: {
           "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${token}`,
@@ -57,7 +63,7 @@ const Help = () => {
       });
 
       if (res.status === 201) {
-        alert("✅ Issue reported successfully!");
+        toast.success("✅ Issue reported successfully!");
         setFormData({
           title: "",
           description: "",
@@ -66,10 +72,11 @@ const Help = () => {
           state: "",
           image: null,
         });
+        navigate("/user-dashboard");
       }
     } catch (error) {
       console.error(error);
-      alert("❌ Failed to report issue. Please try again later.");
+      toast.error(error.response?.data?.message || "❌ Failed to report issue. Please try again.");
     }
   };
 
@@ -127,13 +134,9 @@ const Help = () => {
 
         {/* Form Card */}
         <form
-          onSubmit={(e) => {
-            e.preventDefault(); // prevents page reload
-            handleSubmit(); // calls your function
-          }}
+          onSubmit={handleSubmit}
           className="bg-white rounded-lg shadow-lg p-8 mb-8"
         >
-        <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
           <div className="space-y-6">
             {/* Category */}
             <div>
@@ -226,9 +229,6 @@ const Help = () => {
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
                 />
               </div>
-              <p className="text-xs text-gray-500 mt-1">
-                Be as specific as possible with landmarks
-              </p>
             </div>
 
             {/* Upload */}
@@ -237,7 +237,6 @@ const Help = () => {
                 Upload Photo *
               </label>
 
-              {/* Show preview if image is uploaded */}
               {formData.image ? (
                 <div className="relative border-2 border-gray-300 rounded-lg overflow-hidden">
                   <img
@@ -246,6 +245,7 @@ const Help = () => {
                     className="w-full h-64 object-cover"
                   />
                   <button
+                    type="button"
                     onClick={() => setFormData({ ...formData, image: null })}
                     className="absolute cursor-pointer top-2 right-2 rounded-full bg-red-600 text-white hover:bg-red-700 shadow-lg px-2 py-2"
                   >
@@ -262,7 +262,7 @@ const Help = () => {
                       const file = e.target.files[0];
                       if (file) {
                         if (file.size > 5 * 1024 * 1024) {
-                          alert("File size should be less than 5MB");
+                          toast.error("File size should be less than 5MB");
                           e.target.value = null;
                           return;
                         }
@@ -287,15 +287,14 @@ const Help = () => {
               )}
             </div>
 
-            {/* Submit */}
+            {/* Submit Button */}
             <button
-              onClick={handleSubmit}
+              type="submit"
               className="w-full cursor-pointer bg-orange-600 text-white py-4 rounded-lg hover:bg-orange-700 transition font-semibold text-lg"
             >
               Submit Report
             </button>
           </div>
-        </div>
         </form>
 
         {/* Contact Info */}

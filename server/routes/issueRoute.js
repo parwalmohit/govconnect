@@ -14,7 +14,8 @@ const router = express.Router();
 // USER ROUTES
 router.post("/", protect, upload.single("image"), createIssue);
 router.get("/my", protect, getUserIssues);
-
+router.get("/all", getAllIssues)
+    
 // ADMIN ROUTES
 router.get("/", protect, adminOnly, getAllIssues);
 router.put("/:id", protect, adminOnly, updateIssueStatus);

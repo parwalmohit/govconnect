@@ -1,47 +1,57 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Search } from "lucide-react";
 import IssueCard from "../components/IssueCard";
 import Footer from "../components/Footer";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 const Issues = () => {
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
+  const [issues, setIssues] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const issues = [
-    {
-      id: 1,
-      title: "Pothole on MG Road",
-      description: "Large pothole causing traffic issues near metro station",
-      location: "MG Road, Bangalore",
-      date: "03 Nov 2025",
-      status: "pending",
-      image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400",
-    },
-    {
-      id: 2,
-      title: "Street Light Not Working",
-      description: "Street light broken for last 5 days creating safety issues",
-      location: "Connaught Place, Delhi",
-      date: "02 Nov 2025",
-      status: "in-progress",
-      image: "https://images.unsplash.com/photo-1513828583688-c52646db42da?w=400",
-    },
-    {
-      id: 3,
-      title: "Garbage Not Collected",
-      description: "Municipal garbage not picked up for 3 days",
-      location: "Bandra West, Mumbai",
-      date: "01 Nov 2025",
-      status: "resolved",
-      image: "https://images.unsplash.com/photo-1604187351574-c75ca79f5807?w=400",
-    },
-  ];
+  const baseURL = import.meta.env.VITE_API_URL;
+
+  useEffect(() => {
+    fetchAllIssues();
+  }, []);
+
+  const fetchAllIssues = async () => {
+    try {
+      setLoading(true);
+      const { data } = await axios.get(`${baseURL}/issues/all`);
+      console.log('Fetched issues:', data);
+      setIssues(data);
+    } catch (error) {
+      console.error('Error fetching issues:', error);
+      toast.error('Failed to load issues');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredIssues = issues.filter(
     (i) =>
       (filter === "all" || i.status === filter) &&
       i.title.toLowerCase().includes(search.toLowerCase())
   );
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  };
+
+  // Transform data to match IssueCard expected format
+  const transformedIssues = filteredIssues.map(issue => ({
+    id: issue._id,
+    title: issue.title,
+    description: issue.description,
+    location: `${issue.location}, ${issue.state}`,
+    date: formatDate(issue.createdAt),
+    status: issue.status,
+    image: `${baseURL}${issue.imageUrl || issue.image}`
+  }));
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -56,12 +66,12 @@ const Issues = () => {
       {/* Filters */}
       <div className="max-w-6xl mx-auto px-8 py-10">
         <div className="flex items-center justify-between mb-10">
-          <div className="flex gap-3">
+          <div className="cursor-pointer flex gap-3">
             {["all", "pending", "in-progress", "resolved"].map((f) => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className={`px-5 py-2 rounded-lg font-medium ${
+                className={`px-5 py-2 cursor-pointer rounded-lg font-medium transition ${
                   filter === f
                     ? "bg-orange-600 text-white"
                     : "bg-gray-200 text-gray-700 hover:bg-gray-300"
@@ -87,18 +97,26 @@ const Issues = () => {
           </div>
         </div>
 
-        {/* Issues Grid */}
-        <div className="grid grid-cols-3 gap-6">
-          {filteredIssues.length === 0 ? (
-            <div className="col-span-3 text-center text-gray-600 py-12 text-lg">
-              No issues found for this filter.
-            </div>
-          ) : (
-            filteredIssues.map((issue) => (
-              <IssueCard key={issue.id} issue={issue} />
-            ))
-          )}
-        </div>
+        {/* Loading State */}
+        {loading ? (
+          <div className="text-center text-gray-600 py-12">
+            <div className="w-12 h-12 border-4 border-orange-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-lg">Loading issues...</p>
+          </div>
+        ) : (
+          /* Issues Grid */
+          <div className="grid grid-cols-3 gap-6">
+            {transformedIssues.length === 0 ? (
+              <div className="col-span-3 text-center text-gray-600 py-12 text-lg">
+                No issues found for this filter.
+              </div>
+            ) : (
+              transformedIssues.map((issue) => (
+                <IssueCard key={issue.id} issue={issue} />
+              ))
+            )}
+          </div>
+        )}
       </div>
 
       <Footer />

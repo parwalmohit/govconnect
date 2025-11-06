@@ -1,39 +1,45 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, Calendar, CheckCircle, Clock, AlertCircle, FileText } from 'lucide-react';
 import Footer from '../components/Footer';
+import axios from 'axios';
+import { toast } from 'react-toastify';
 
 const UserDashboard = () => {
-  // Temporary data — replace later with user-specific data from MongoDB
-  const userIssues = [
-    {
-      id: 1,
-      title: 'Broken Streetlight near School',
-      description: 'Streetlight not working for 3 days, dark at night',
-      location: 'Sector 21, Noida',
-      date: '03 Nov 2025',
-      status: 'pending',
-      image: 'https://images.unsplash.com/photo-1509395062183-67c5ad6faff9?w=400'
-    },
-    {
-      id: 2,
-      title: 'Garbage Not Collected',
-      description: 'Overflowing dustbin in front of house 45B',
-      location: 'Bandra West, Mumbai',
-      date: '01 Nov 2025',
-      status: 'in-progress',
-      image: 'https://images.unsplash.com/photo-1604187351574-c75ca79f5807?w=400'
-    },
-    {
-      id: 3,
-      title: 'Pothole on Main Road',
-      description: 'Large pothole near bus stop causing traffic jams',
-      location: 'Koramangala, Bangalore',
-      date: '28 Oct 2025',
-      status: 'resolved',
-      image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400'
-    },
-  ];
+  const [userIssues, setUserIssues] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const baseURL = import.meta.env.VITE_API_URL;
+
+  // Fetch user's issues on component mount
+  useEffect(() => {
+    fetchUserIssues();
+  }, []);
+
+  const fetchUserIssues = async () => {
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+      toast.error('Please login first');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const { data } = await axios.get(`${baseURL}/issues/my`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      
+      setUserIssues(data);
+    } catch (error) {
+      console.error('Error fetching issues:', error);
+      toast.error('Failed to load your issues');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getStatusBadge = (status) => {
     const styles = {
@@ -48,6 +54,11 @@ const UserDashboard = () => {
     if (status === 'resolved') return <CheckCircle size={14} />;
     if (status === 'in-progress') return <Clock size={14} />;
     return <AlertCircle size={14} />;
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
   };
 
   return (
@@ -92,24 +103,29 @@ const UserDashboard = () => {
         </Link>
       </div>
 
-      {/* User’s Issues List */}
+      {/* User's Issues List */}
       <div className="max-w-6xl mx-auto px-8 pb-12 flex-1">
         <h2 className="text-2xl font-bold text-gray-800 mb-6">Your Submitted Issues</h2>
 
-        {userIssues.length === 0 ? (
+        {loading ? (
+          <div className="text-center text-gray-600 bg-white p-10 rounded-lg shadow-md">
+            <div className="w-10 h-10 border-4 border-orange-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+            <p>Loading your issues...</p>
+          </div>
+        ) : userIssues.length === 0 ? (
           <div className="text-center text-gray-600 bg-white p-10 rounded-lg shadow-md">
             <FileText size={32} className="mx-auto mb-3 text-orange-500" />
-            <p>No issues reported yet. Click “Report New Issue” to get started.</p>
+            <p>No issues reported yet. Click "Report New Issue" to get started.</p>
           </div>
         ) : (
           <div className="grid grid-cols-3 gap-6">
             {userIssues.map((issue) => (
               <div
-                key={issue.id}
+                key={issue._id}
                 className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition cursor-pointer"
               >
                 <img
-                  src={issue.image}
+                  src={`${baseURL}${issue.imageUrl}`}
                   alt={issue.title}
                   className="w-full h-48 object-cover"
                 />
@@ -133,11 +149,11 @@ const UserDashboard = () => {
                   <div className="space-y-2 text-xs text-gray-500">
                     <div className="flex items-center gap-2">
                       <MapPin size={14} className="flex-shrink-0" />
-                      <span>{issue.location}</span>
+                      <span>{issue.location}, {issue.state}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Calendar size={14} className="flex-shrink-0" />
-                      <span>{issue.date}</span>
+                      <span>{formatDate(issue.createdAt)}</span>
                     </div>
                   </div>
                 </div>

@@ -41,12 +41,14 @@ const Login = ({ isAdminLogin = false }) => {
       const { data } = await axios.post(url, formData);
 
       localStorage.setItem("token", data.token);
-      localStorage.setItem("role", data.role);
+
+      const userRole = view === "user" ? data.user?.role : "admin";
+      localStorage.setItem("role", userRole);
 
       toast.success(
-        `${data.role === "user" ? "User" : "Admin"} login successful`
+        `${userRole === "user" ? "User" : "Admin"} login successful`
       );
-      if (data.role === "admin") navigate("/admin-dashboard");
+      if (userRole === "admin") navigate("/admin-dashboard");
       else navigate("/user-dashboard");
     } catch (err) {
       toast.error(err.response?.data?.message || "Login failed");

@@ -1,11 +1,58 @@
 import Issue from "../models/issueModel.js";
+import { GoogleGenAI } from "@google/genai";
+
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 // USER: Report a new issue
 export const createIssue = async (req, res) => {
   try {
     const { title, description, category, state, location } = req.body;
 
-    const imageUrl = req.file ? `/uploads/${req.file.filename}` : null; 
+    if (!req.file) {
+      return res.status(400).json({ message: "Image is required" });
+    }
+    const imageUrl = `/uploads/${req.file.filename}`;
+
+    // Default priority
+    let priority = "medium";
+
+    // Try AI prioritization
+    try {
+      const prompt = `You are an AI civic issue prioritization assistant.
+Your task is to read a user's complaint and assign one of three priority levels:
+
+- "high" → Urgent, affects safety, health, or essential public services
+- "medium" → Important but not life-threatening, affects daily comfort or convenience
+- "low" → Minor or aesthetic issues
+
+Input from user:
+Title: ${title}
+Description: ${description}
+Category: ${category}
+State: ${state}
+Location: ${location}
+
+If the Title or description is gibberish, empty, or irrelevant, return "low".
+Respond with only one lowercase word: high, medium, or low.
+No explanation, just the word.`;
+
+      const result = await ai.models.generateContent({
+        model: "gemini-1.5-flash",
+        contents: prompt,
+      });
+
+      const aiResponse = result.text.trim().toLowerCase();
+
+      if (["high", "medium", "low"].includes(aiResponse)) {
+        priority = aiResponse;
+        console.log("✅ AI Priority set to:", priority);
+      } else {
+        console.log("⚠️ Invalid AI response, using default priority");
+      }
+    } catch (aiError) {
+      console.error("⚠️ AI Priority Generation Error:", aiError.message);
+      console.log("📌 Using default priority: medium");
+    }
 
     const issue = new Issue({
       title,
@@ -14,7 +61,9 @@ export const createIssue = async (req, res) => {
       state,
       location,
       imageUrl,
+      status: "pending",
       user: req.user._id,
+      priority,
     });
 
     await issue.save();
@@ -28,7 +77,9 @@ export const createIssue = async (req, res) => {
 // USER: Get all issues created by logged-in user
 export const getUserIssues = async (req, res) => {
   try {
-    const issues = await Issue.find({ user: req.user._id }).sort({ createdAt: -1 });
+    const issues = await Issue.find({ user: req.user._id }).sort({
+      createdAt: -1,
+    });
     res.json(issues);
   } catch (error) {
     console.error("Get User Issues Error:", error.message);
