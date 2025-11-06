@@ -399,16 +399,17 @@ const AdminDashboard = () => {
       {showModal && selectedIssue && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto relative">
-            {/* Close Button */}
-            <button
-              onClick={() => setShowModal(false)}
-              className="cursor-pointer absolute top-4 right-4 z-10 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100 transition"
-            >
-              <X size={20} className="text-gray-600 cursor-pointer" />
-            </button>
-
             <div className="sticky top-0 bg-linear-to-r from-orange-600 to-orange-700 text-white p-6 rounded-t-lg">
-              <h2 className="text-2xl font-bold mb-2 pr-10">{selectedIssue.title}</h2>
+              {/* Close Button */}
+              <button
+                onClick={() => setShowModal(false)}
+                className="cursor-pointer absolute top-4 right-4 z-10 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100 transition"
+              >
+                <X size={20} className="text-gray-600 cursor-pointer" />
+              </button>
+              <h2 className="text-2xl font-bold mb-2 pr-10">
+                {selectedIssue.title}
+              </h2>
               <div className="flex items-center gap-4 text-sm text-orange-100">
                 <span>
                   Reported by:{" "}
