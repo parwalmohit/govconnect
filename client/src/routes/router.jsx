@@ -17,7 +17,11 @@ const router = createBrowserRouter([
       {
         index: true,
         path: "",
-        element: <Home />,
+        element: (
+          <ProtectedRoute allowPublic={true}>
+            <Home />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "login",
@@ -41,7 +45,12 @@ const router = createBrowserRouter([
       },
       {
         path: "issues",
-        element: <Issues />,
+        // element: <Issues />,
+        element: (
+          <ProtectedRoute allowPublic={true}>
+            <Issues />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "user-dashboard",
@@ -51,7 +60,7 @@ const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
-      
+
       {
         path: "admin-dashboard",
         element: (

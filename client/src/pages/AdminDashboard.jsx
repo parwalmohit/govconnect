@@ -115,13 +115,11 @@ const AdminDashboard = () => {
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString("en-IN", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
   };
-
   // Calculate statistics - treat missing status as pending
   const stats = {
     total: reports.length,
@@ -270,115 +268,126 @@ const AdminDashboard = () => {
           </div>
         ) : (
           <div className="bg-white rounded-lg shadow-md overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-linear-to-r from-orange-600 to-orange-700 text-white">
-                <tr>
-                  <th className="py-4 px-4 text-left font-semibold">ID</th>
-                  <th className="py-4 px-4 text-left font-semibold">
-                    Issue Details
-                  </th>
-                  <th className="py-4 px-4 text-left font-semibold">
-                    Category
-                  </th>
-                  <th className="py-4 px-4 text-left font-semibold">
-                    Priority
-                  </th>
-                  <th className="py-4 px-4 text-left font-semibold">
-                    Reporter
-                  </th>
-                  <th className="py-4 px-4 text-left font-semibold">
-                    Location
-                  </th>
-                  <th className="py-4 px-4 text-left font-semibold">Date</th>
-                  <th className="py-4 px-4 text-left font-semibold">Status</th>
-                  <th className="py-4 px-4 text-center font-semibold">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredReports.map((r, index) => (
-                  <tr
-                    key={r._id}
-                    className="border-b border-gray-200 hover:bg-gray-50 transition"
-                  >
-                    <td className="py-4 px-4 font-semibold text-gray-700">
-                      #{index + 1}
-                    </td>
-                    <td className="py-4 px-4">
-                      <div className="font-semibold text-gray-800">
-                        {r.title}
-                      </div>
-                      <div className="text-sm text-gray-500 truncate max-w-xs">
-                        {r.description}
-                      </div>
-                    </td>
-                    <td className="py-4 px-4">
-                      <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-                        {r.category}
-                      </span>
-                    </td>
-                    <td className="py-4 px-4">
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                          r.priority === "high"
-                            ? "bg-red-100 text-red-800"
-                            : r.priority === "medium"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-green-100 text-green-800"
-                        }`}
-                      >
-                        {r.priority?.charAt(0).toUpperCase() +
-                          r.priority?.slice(1) || "Medium"}
-                      </span>
-                    </td>
-                    <td className="py-4 px-4 text-sm text-gray-600">
-                      {r.user?.name || r.user?.email || "Unknown"}
-                    </td>
-                    <td className="py-4 px-4">
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <MapPin size={14} className="text-gray-400 shrink-0" />
-                        <span className="truncate max-w-xs">
-                          {r.location}, {r.state}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="py-4 px-4 text-sm text-gray-600">
-                      <div className="flex items-center gap-2">
-                        <Calendar size={14} className="text-gray-400" />
-                        {formatDate(r.createdAt)}
-                      </div>
-                    </td>
-                    <td className="py-4 px-4">
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 w-fit border ${getStatusBadge(
-                          r.status || "pending"
-                        )}`}
-                      >
-                        {getStatusIcon(r.status || "pending")}
-                        {(r.status || "pending") === "in-progress"
-                          ? "In Progress"
-                          : (r.status || "pending").charAt(0).toUpperCase() +
-                            (r.status || "pending").slice(1)}
-                      </span>
-                    </td>
-                    <td className="py-4 px-4">
-                      <div className="flex items-center justify-center gap-2">
-                        <button
-                          onClick={() => {
-                            setSelectedIssue(r);
-                            setShowModal(true);
-                          }}
-                          className="cursor-pointer bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700 text-sm font-medium flex items-center gap-1"
-                        >
-                          <Eye size={14} />
-                        </button>
-                      </div>
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-max">
+                <thead className="bg-linear-to-r from-orange-600 to-orange-700 text-white">
+                  <tr>
+                    <th className="py-4 px-4 text-left font-semibold whitespace-nowrap">
+                      ID
+                    </th>
+                    <th className="py-4 px-4 text-left font-semibold whitespace-nowrap">
+                      Issue Details
+                    </th>
+                    <th className="py-4 px-4 text-left font-semibold whitespace-nowrap">
+                      Category
+                    </th>
+                    <th className="py-4 px-4 text-left font-semibold whitespace-nowrap">
+                      Priority
+                    </th>
+                    <th className="py-4 px-4 text-left font-semibold whitespace-nowrap">
+                      Reporter
+                    </th>
+                    <th className="py-4 px-4 text-left font-semibold whitespace-nowrap">
+                      Location
+                    </th>
+                    <th className="py-4 px-4 text-left font-semibold whitespace-nowrap">
+                      Date
+                    </th>
+                    <th className="py-4 px-4 text-left font-semibold whitespace-nowrap">
+                      Status
+                    </th>
+                    <th className="py-4 px-4 text-center font-semibold whitespace-nowrap">
+                      Actions
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {filteredReports.map((r, index) => (
+                    <tr
+                      key={r._id}
+                      className="border-b border-gray-200 hover:bg-gray-50 transition"
+                    >
+                      <td className="py-4 px-4 font-semibold text-gray-700 whitespace-nowrap">
+                        #{index + 1}
+                      </td>
+                      <td className="py-4 px-4">
+                        <div className="font-semibold text-gray-800 min-w-[200px]">
+                          {r.title}
+                        </div>
+                        <div className="text-sm text-gray-500 truncate max-w-xs">
+                          {r.description}
+                        </div>
+                      </td>
+                      <td className="py-4 px-4 whitespace-nowrap">
+                        <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                          {r.category}
+                        </span>
+                      </td>
+                      <td className="py-4 px-4 whitespace-nowrap">
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                            r.priority === "high"
+                              ? "bg-red-100 text-red-800"
+                              : r.priority === "medium"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : "bg-green-100 text-green-800"
+                          }`}
+                        >
+                          {r.priority?.charAt(0).toUpperCase() +
+                            r.priority?.slice(1) || "Medium"}
+                        </span>
+                      </td>
+                      <td className="py-4 px-4 text-sm text-gray-600 whitespace-nowrap">
+                        {r.user?.name || r.user?.email || "Unknown"}
+                      </td>
+                      <td className="py-4 px-4 whitespace-nowrap">
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <MapPin
+                            size={14}
+                            className="text-gray-400 shrink-0"
+                          />
+                          <span className="truncate max-w-xs">
+                            {r.location}, {r.state}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-4 px-4 text-sm text-gray-600 whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          <Calendar size={14} className="text-gray-400" />
+                          {formatDate(r.createdAt)}
+                        </div>
+                      </td>
+                      <td className="py-4 px-4 whitespace-nowrap">
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 w-fit border ${getStatusBadge(
+                            r.status || "pending"
+                          )}`}
+                        >
+                          {getStatusIcon(r.status || "pending")}
+                          {(r.status || "pending") === "in-progress"
+                            ? "In Progress"
+                            : (r.status || "pending").charAt(0).toUpperCase() +
+                              (r.status || "pending").slice(1)}
+                        </span>
+                      </td>
+                      <td className="py-4 px-4 whitespace-nowrap">
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => {
+                              setSelectedIssue(r);
+                              setShowModal(true);
+                            }}
+                            className="cursor-pointer bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700 text-sm font-medium flex items-center gap-1"
+                          >
+                            <Eye size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
