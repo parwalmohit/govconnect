@@ -31,11 +31,14 @@ const Issues = () => {
     }
   };
 
-  const filteredIssues = issues.filter(
-    (i) =>
-      (filter === "all" || i.status === filter) &&
-      i.title.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredIssues = issues.filter((i) => {
+  const matchesFilter = filter === "all" || i.status === filter;
+  const matchesSearch =
+    i.title.toLowerCase().includes(search.toLowerCase()) ||
+    i.location.toLowerCase().includes(search.toLowerCase()) ||
+    i.state.toLowerCase().includes(search.toLowerCase());
+  return matchesFilter && matchesSearch;
+});
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
