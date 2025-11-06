@@ -21,9 +21,9 @@ export const createIssue = async (req, res) => {
       const prompt = `You are an AI civic issue prioritization assistant.
 Your task is to read a user's complaint and assign one of three priority levels:
 
-- "high" → Urgent, affects safety, health, or essential public services
-- "medium" → Important but not life-threatening, affects daily comfort or convenience
-- "low" → Minor or aesthetic issues
+- "high" → Urgent, affects safety, health, or essential public services (e.g., water leaks, electrical hazards, major road damage, sewage overflow, public health risks)
+- "medium" → Important but not life-threatening, affects daily comfort or convenience (e.g., potholes, streetlight issues, garbage collection delays)
+- "low" → Minor or aesthetic issues (e.g., park maintenance, graffiti, minor cosmetic issues)
 
 Input from user:
 Title: ${title}
@@ -32,22 +32,23 @@ Category: ${category}
 State: ${state}
 Location: ${location}
 
-If the Title or description is gibberish, empty, or irrelevant, return "low".
-Respond with only one lowercase word: high, medium, or low.
-No explanation, just the word.`;
+Analyze the severity and impact of this issue. If the title or description is gibberish, empty, or irrelevant, return "low".
+
+Respond with ONLY ONE lowercase word: high, medium, or low.
+No explanation, no punctuation, just the word.`;
 
       const result = await ai.models.generateContent({
         model: "gemini-1.5-flash",
         contents: prompt,
       });
 
-      const aiResponse = result.text.trim().toLowerCase();
+      const aiResponse = result.text.trim().toLowerCase().replace(/[^a-z]/g, '');
 
       if (["high", "medium", "low"].includes(aiResponse)) {
         priority = aiResponse;
         console.log("✅ AI Priority set to:", priority);
       } else {
-        console.log("⚠️ Invalid AI response, using default priority");
+        console.log("⚠️ Invalid AI response:", aiResponse, "- using default priority");
       }
     } catch (aiError) {
       console.error("⚠️ AI Priority Generation Error:", aiError.message);

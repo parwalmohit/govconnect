@@ -13,6 +13,9 @@ import {
   Eye,
   Calendar,
   BarChart3,
+  X,
+  PlayCircle,
+  RotateCcw,
 } from "lucide-react";
 import axios from "axios";
 import { toast } from "react-toastify";
@@ -394,10 +397,18 @@ const AdminDashboard = () => {
 
       {/* Issue Detail Modal */}
       {showModal && selectedIssue && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto relative">
+            {/* Close Button */}
+            <button
+              onClick={() => setShowModal(false)}
+              className="cursor-pointer absolute top-4 right-4 z-10 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100 transition"
+            >
+              <X size={20} className="text-gray-600 cursor-pointer" />
+            </button>
+
             <div className="sticky top-0 bg-linear-to-r from-orange-600 to-orange-700 text-white p-6 rounded-t-lg">
-              <h2 className="text-2xl font-bold mb-2">{selectedIssue.title}</h2>
+              <h2 className="text-2xl font-bold mb-2 pr-10">{selectedIssue.title}</h2>
               <div className="flex items-center gap-4 text-sm text-orange-100">
                 <span>
                   Reported by:{" "}
@@ -422,18 +433,18 @@ const AdminDashboard = () => {
                 <div className="space-y-4">
                   <div>
                     <label className="text-sm font-semibold text-gray-600">
-                      Category
+                      Category:
                     </label>
-                    <div className="mt-1 px-3 py-2 bg-blue-100 text-blue-800 rounded-lg inline-block">
+                    <div className="mt-1 px-3 ml-2 py-1 bg-blue-100 text-blue-800 rounded-lg inline-block">
                       {selectedIssue.category}
                     </div>
                   </div>
                   <div>
                     <label className="text-sm font-semibold text-gray-600">
-                      Current Status
+                      Current Status:
                     </label>
                     <div
-                      className={`mt-1 px-3 py-2 rounded-lg inline-flex items-center gap-2 border ${getStatusBadge(
+                      className={`mt-1 ml-3 px-3 py-1 rounded-lg inline-flex items-center gap-2 border ${getStatusBadge(
                         selectedIssue.status || "pending"
                       )}`}
                     >
@@ -467,16 +478,17 @@ const AdminDashboard = () => {
                 </p>
               </div>
 
-              <div className="border-t pt-6 flex items-center justify-between">
-                <div className="space-x-2">
+              <div className="border-t pt-6">
+                <div className="flex gap-3">
                   {(!selectedIssue.status ||
                     selectedIssue.status === "pending") && (
                     <button
                       onClick={() =>
                         handleStatusUpdate(selectedIssue._id, "in-progress")
                       }
-                      className="cursor-pointer bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 font-medium"
+                      className="flex-1 cursor-pointer bg-yellow-600 text-white px-4 py-3 rounded-lg hover:bg-yellow-700 font-medium flex items-center justify-center gap-2 transition"
                     >
+                      <PlayCircle size={18} />
                       Mark In Progress
                     </button>
                   )}
@@ -485,8 +497,9 @@ const AdminDashboard = () => {
                       onClick={() =>
                         handleStatusUpdate(selectedIssue._id, "resolved")
                       }
-                      className="cursor-pointer bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 font-medium"
+                      className="flex-1 cursor-pointer bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 font-medium flex items-center justify-center gap-2 transition"
                     >
+                      <CheckCircle size={18} />
                       Mark Resolved
                     </button>
                   )}
@@ -495,24 +508,20 @@ const AdminDashboard = () => {
                       onClick={() =>
                         handleStatusUpdate(selectedIssue._id, "in-progress")
                       }
-                      className="cursor-pointer bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 font-medium"
+                      className="flex-1 cursor-pointer bg-yellow-600 text-white px-4 py-3 rounded-lg hover:bg-yellow-700 font-medium flex items-center justify-center gap-2 transition"
                     >
+                      <RotateCcw size={18} />
                       Reopen Issue
                     </button>
                   )}
                   <button
                     onClick={() => setShowDeleteModal(true)}
-                    className="cursor-pointer bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 font-medium"
+                    className="flex-1 cursor-pointer bg-red-600 text-white px-4 py-3 rounded-lg hover:bg-red-700 font-medium flex items-center justify-center gap-2 transition"
                   >
+                    <Trash2 size={18} />
                     Delete Issue
                   </button>
                 </div>
-                <button
-                  onClick={() => setShowModal(false)}
-                  className="cursor-pointer bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 font-medium"
-                >
-                  Close
-                </button>
               </div>
             </div>
           </div>
@@ -521,8 +530,16 @@ const AdminDashboard = () => {
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && selectedIssue && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6 relative">
+            {/* Close Button */}
+            <button
+              onClick={() => setShowDeleteModal(false)}
+              className="absolute top-4 right-4 cursor-pointer text-gray-400 hover:text-gray-600 transition"
+            >
+              <X size={20} />
+            </button>
+
             <div className="flex items-center gap-3 mb-4">
               <div className="bg-red-100 p-3 rounded-full">
                 <AlertCircle className="text-red-600" size={24} />
@@ -535,17 +552,18 @@ const AdminDashboard = () => {
               undone.
             </p>
 
-            <div className="flex gap-3 justify-end">
+            <div className="flex gap-3">
               <button
                 onClick={() => setShowDeleteModal(false)}
-                className="cursor-pointer px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
+                className="flex-1 cursor-pointer px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition"
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleDelete(selectedIssue._id)}
-                className="cursor-pointer px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium"
+                className="flex-1 cursor-pointer px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium flex items-center justify-center gap-2 transition"
               >
+                <Trash2 size={16} />
                 Delete
               </button>
             </div>
